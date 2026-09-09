@@ -1,0 +1,30 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+      - name: Restore
+        run: dotnet restore --locked-mode
+      - name: Publish
+        shell: pwsh
+        run: dotnet publish -c Release -r win-x64 --self-contained true --no-restore "-p:Version=$($env:GITHUB_REF_NAME.TrimStart('v'))" -o publish
+      - name: Package
+        shell: pwsh
+        run: Compress-Archive -Path publish\* -DestinationPath "MatHax-Reborn-Launcher-$env:GITHUB_REF_NAME-win-x64.zip"
+      - name: Create GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create $env:GITHUB_REF_NAME "MatHax-Reborn-Launcher-$env:GITHUB_REF_NAME-win-x64.zip" --verify-tag --generate-notes --title "MatHax Reborn Launcher $env:GITHUB_REF_NAME"
