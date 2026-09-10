@@ -1,16 +1,11 @@
 <Window x:Class="MatHax.Reborn.Launcher.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="MatHax Reborn Launcher"
-        Width="980" Height="620" MinWidth="820" MinHeight="540"
+        Width="980" Height="620"
         WindowStartupLocation="CenterScreen" WindowStyle="None"
-        ResizeMode="CanResize" Background="Transparent" AllowsTransparency="True"
+        ResizeMode="NoResize" Background="Transparent" AllowsTransparency="True"
         UseLayoutRounding="True" SnapsToDevicePixels="True" SizeChanged="Window_SizeChanged">
-    <shell:WindowChrome.WindowChrome>
-        <shell:WindowChrome CaptionHeight="46" ResizeBorderThickness="7" CornerRadius="16" GlassFrameThickness="0" />
-    </shell:WindowChrome.WindowChrome>
-
     <Border x:Name="ShellBorder" Background="{StaticResource BackgroundBrush}" CornerRadius="16"
             BorderBrush="#2A2032" BorderThickness="1">
         <Border.Clip>
@@ -24,7 +19,7 @@
 
             <Grid Grid.Row="0" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <TextBlock Text="MATHAX REBORN" Margin="18,0,0,0" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource MutedBrush}" />
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button x:Name="UpdateButton" Visibility="Collapsed" Content="Update available" Margin="0,8,6,8"
                             Padding="14,0" FontSize="11" Style="{StaticResource SecondaryButton}" Click="UpdateButton_Click" />
                     <Button Width="46" Height="46" Content="—" FontSize="15" Foreground="{StaticResource MutedBrush}" Background="Transparent" BorderThickness="0" Cursor="Hand" Click="Minimize_Click" />

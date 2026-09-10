@@ -135,7 +135,7 @@ public sealed class MinecraftService
                 Session = Session,
                 MaximumRamMb = Math.Clamp(memoryGb, 2, 32) * 1024,
                 GameLauncherName = "MatHax Reborn Launcher",
-                GameLauncherVersion = "0.2.0"
+                GameLauncherVersion = "0.2.1"
             },
             cancellationToken);
 

@@ -20,7 +20,7 @@ public sealed class LauncherUpdateService
     {
         httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(15) };
         httpClient.DefaultRequestHeaders.UserAgent.Add(
-            new ProductInfoHeaderValue("MatHax-Reborn-Launcher", "0.2.0"));
+            new ProductInfoHeaderValue("MatHax-Reborn-Launcher", "0.2.1"));
         httpClient.DefaultRequestHeaders.Accept.Add(
             new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
         httpClient.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");

@@ -25,7 +25,7 @@ public sealed class CuratedModService
     {
         httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
         httpClient.DefaultRequestHeaders.UserAgent.Add(
-            new ProductInfoHeaderValue("MatHax-Reborn-Launcher", "0.2.0"));
+            new ProductInfoHeaderValue("MatHax-Reborn-Launcher", "0.2.1"));
         installed = LoadManifest();
     }
 

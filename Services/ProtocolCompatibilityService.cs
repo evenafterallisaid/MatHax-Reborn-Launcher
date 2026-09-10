@@ -17,7 +17,7 @@ public sealed class ProtocolCompatibilityService
     {
         httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
         httpClient.DefaultRequestHeaders.UserAgent.Add(
-            new ProductInfoHeaderValue("MatHax-Reborn-Launcher", "0.2.0"));
+            new ProductInfoHeaderValue("MatHax-Reborn-Launcher", "0.2.1"));
     }
 
     public async Task<ProtocolCompatibilityMod> EnsureLatestAsync(

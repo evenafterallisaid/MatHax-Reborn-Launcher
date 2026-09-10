@@ -13,6 +13,12 @@ public sealed record GitHubAsset(
     [property: JsonPropertyName("size")] long Size,
     [property: JsonPropertyName("digest")] string? Digest);
 
-public sealed record ClientRelease(string Tag, string PageUrl, string JarName, string DownloadUrl, long Size);
+public sealed record ClientRelease(
+    string Tag,
+    string PageUrl,
+    string JarName,
+    string DownloadUrl,
+    long Size,
+    string Sha256);
 
 public sealed record LauncherUpdate(string Tag, string DownloadUrl, long Size, string Sha256);
