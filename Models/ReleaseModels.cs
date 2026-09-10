@@ -10,6 +10,9 @@ public sealed record GitHubRelease(
 public sealed record GitHubAsset(
     [property: JsonPropertyName("name")] string Name,
     [property: JsonPropertyName("browser_download_url")] string DownloadUrl,
-    [property: JsonPropertyName("size")] long Size);
+    [property: JsonPropertyName("size")] long Size,
+    [property: JsonPropertyName("digest")] string? Digest);
 
 public sealed record ClientRelease(string Tag, string PageUrl, string JarName, string DownloadUrl, long Size);
+
+public sealed record LauncherUpdate(string Tag, string DownloadUrl, long Size, string Sha256);

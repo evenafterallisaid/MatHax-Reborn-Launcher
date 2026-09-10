@@ -22,6 +22,7 @@ public sealed class MinecraftService
     private readonly MinecraftPath instancePath;
     private readonly MinecraftLauncher launcher;
     private readonly FabricInstaller fabricInstaller;
+    private readonly ProtocolCompatibilityService protocolCompatibility = new();
     private readonly JELoginHandler loginHandler;
 
     public MSession? Session { get; private set; }
@@ -107,12 +108,21 @@ public sealed class MinecraftService
         }
     }
 
-    public async Task<Process> LaunchAsync(int memoryGb, CancellationToken cancellationToken = default)
+    public async Task<Process> LaunchAsync(
+        int memoryGb,
+        bool wideServerSupport,
+        CancellationToken cancellationToken = default)
     {
         if (Session is null) await SignInAsync(cancellationToken);
 
         string clientJar = await ResolveClientJarAsync(cancellationToken);
-        DeployClientJar(clientJar, Path.Combine(AppPaths.Instance, "mods"));
+        string modsDirectory = Path.Combine(AppPaths.Instance, "mods");
+        DeployClientJar(clientJar, modsDirectory);
+
+        ProtocolCompatibilityMod? protocolMod = wideServerSupport
+            ? await ResolveProtocolCompatibilityAsync(cancellationToken)
+            : null;
+        DeployProtocolCompatibility(protocolMod?.FilePath, modsDirectory);
 
         Report("Installing Fabric profile…", null);
         await fabricInstaller.Install(GameVersion, FabricLoaderVersion, instancePath, FabricVersionName);
@@ -125,7 +135,7 @@ public sealed class MinecraftService
                 Session = Session,
                 MaximumRamMb = Math.Clamp(memoryGb, 2, 32) * 1024,
                 GameLauncherName = "MatHax Reborn Launcher",
-                GameLauncherVersion = "0.1.0"
+                GameLauncherVersion = "0.2.0"
             },
             cancellationToken);
 
@@ -134,6 +144,45 @@ public sealed class MinecraftService
         process.Start();
         Report("MatHax Reborn is running.", 100);
         return process;
+    }
+
+    public async Task RepairAsync(
+        bool wideServerSupport,
+        CancellationToken cancellationToken = default)
+    {
+        string modsDirectory = Path.Combine(AppPaths.Instance, "mods");
+        string clientJar = await ResolveClientJarAsync(cancellationToken);
+        DeployClientJar(clientJar, modsDirectory);
+
+        ProtocolCompatibilityMod? protocolMod = wideServerSupport
+            ? await ResolveProtocolCompatibilityAsync(cancellationToken)
+            : null;
+        DeployProtocolCompatibility(protocolMod?.FilePath, modsDirectory);
+
+        Report("Repairing the Fabric profile…", null);
+        await fabricInstaller.Install(GameVersion, FabricLoaderVersion, instancePath, FabricVersionName);
+        Report("Checking Minecraft libraries, assets, runtime, and natives…", null);
+        await launcher.InstallAsync(FabricVersionName, cancellationToken);
+        Report("Repair complete. All required game files passed verification.", 100);
+    }
+
+    public async Task<ProtocolCompatibilityMod> ResolveProtocolCompatibilityAsync(
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            Report("Finding the latest compatible ViaFabricPlus build…", null);
+            ProtocolCompatibilityMod result = await protocolCompatibility.EnsureLatestAsync(
+                new Progress<double>(value => Report("Downloading ViaFabricPlus…", value)),
+                cancellationToken);
+            Report($"ViaFabricPlus {result.Version} is ready.", 100);
+            return result;
+        }
+        catch when (protocolCompatibility.FindCachedJar() is { } cached)
+        {
+            Report("Modrinth is unavailable; using cached ViaFabricPlus.", 0);
+            return new ProtocolCompatibilityMod("cached", cached);
+        }
     }
 
     public async Task<string> ResolveClientJarAsync(CancellationToken cancellationToken = default)
@@ -167,6 +216,25 @@ public sealed class MinecraftService
         }
 
         File.Copy(clientJar, destination, true);
+        return destination;
+    }
+
+    public static string? DeployProtocolCompatibility(string? protocolJar, string modsDirectory)
+    {
+        Directory.CreateDirectory(modsDirectory);
+        string? destination = protocolJar is null
+            ? null
+            : Path.Combine(modsDirectory, Path.GetFileName(protocolJar));
+
+        foreach (string oldJar in Directory.GetFiles(modsDirectory, "ViaFabricPlus-*.jar"))
+        {
+            if (destination is null ||
+                !Path.GetFullPath(oldJar).Equals(Path.GetFullPath(destination), StringComparison.OrdinalIgnoreCase))
+                File.Delete(oldJar);
+        }
+
+        if (protocolJar is null) return null;
+        File.Copy(protocolJar, destination!, true);
         return destination;
     }
 

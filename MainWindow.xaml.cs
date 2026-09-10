@@ -14,6 +14,8 @@ public partial class MainWindow : Window
     private readonly ClientReleaseService releases;
     private readonly MinecraftService minecraft;
     private readonly OfficialLauncherInstaller officialInstaller = new();
+    private readonly LauncherUpdateService updater = new();
+    private LauncherUpdate? availableUpdate;
     private bool busy;
 
     public MainWindow()
@@ -23,6 +25,8 @@ public partial class MainWindow : Window
 
         settings = LauncherSettings.Load(AppPaths.Settings);
         MemorySlider.Value = Math.Clamp(settings.MemoryGb, 2, 16);
+        CompatibilityToggle.IsChecked = settings.WideServerSupport;
+        RefreshCompatibilityText();
 
         releases = new ClientReleaseService();
         minecraft = new MinecraftService(releases);
@@ -46,6 +50,20 @@ public partial class MainWindow : Window
             RefreshAccount();
             if (release is null) SetStatus("Ready. A cached client will be used if GitHub stays unavailable.", 0);
             else SetStatus("Ready to launch.", 0);
+
+            try
+            {
+                availableUpdate = await updater.CheckAsync(cancellation.Token);
+                if (availableUpdate is not null)
+                {
+                    UpdateButton.Content = $"Update {availableUpdate.Tag}";
+                    UpdateButton.Visibility = Visibility.Visible;
+                }
+            }
+            catch
+            {
+                // An update check should never prevent the game from launching.
+            }
         }
         catch (OperationCanceledException)
         {
@@ -70,7 +88,10 @@ public partial class MainWindow : Window
     {
         await RunBusyAsync(async () =>
         {
-            await minecraft.LaunchAsync((int)MemorySlider.Value, cancellation.Token);
+            await minecraft.LaunchAsync(
+                (int)MemorySlider.Value,
+                CompatibilityToggle.IsChecked == true,
+                cancellation.Token);
             RefreshAccount();
         }, "MatHax Reborn could not be launched");
     }
@@ -81,8 +102,14 @@ public partial class MainWindow : Window
         {
             SetStatus("Downloading the latest MatHax client…", null);
             string jar = await minecraft.ResolveClientJarAsync(cancellation.Token);
+            ProtocolCompatibilityMod? protocolMod = CompatibilityToggle.IsChecked == true
+                ? await minecraft.ResolveProtocolCompatibilityAsync(cancellation.Token)
+                : null;
             SetStatus("Creating the official launcher profile…", null);
-            string gameDirectory = await officialInstaller.InstallAsync(jar, cancellation.Token);
+            string gameDirectory = await officialInstaller.InstallAsync(
+                jar,
+                protocolMod?.FilePath,
+                cancellation.Token);
             SetStatus("Installed. Select “MatHax Reborn” in the official Minecraft Launcher.", 100);
             MessageBox.Show(
                 this,
@@ -91,6 +118,43 @@ public partial class MainWindow : Window
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
         }, "The official launcher profile could not be installed");
+    }
+
+    private void ModsButton_Click(object sender, RoutedEventArgs e)
+    {
+        ModsWindow window = new() { Owner = this };
+        window.ShowDialog();
+    }
+
+    private async void RepairButton_Click(object sender, RoutedEventArgs e)
+    {
+        await RunBusyAsync(async () =>
+        {
+            await minecraft.RepairAsync(
+                CompatibilityToggle.IsChecked == true,
+                cancellation.Token);
+            MessageBox.Show(
+                this,
+                "Minecraft, Fabric, MatHax, and enabled compatibility files were checked and repaired.",
+                "Repair complete",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }, "MatHax Reborn could not be repaired");
+    }
+
+    private async void UpdateButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (availableUpdate is null) return;
+        await RunBusyAsync(async () =>
+        {
+            SetStatus($"Downloading launcher {availableUpdate.Tag}…", 0);
+            await updater.StageAndRestartAsync(
+                availableUpdate,
+                new Progress<double>(value => SetStatus($"Downloading launcher {availableUpdate.Tag}…", value)),
+                cancellation.Token);
+            SetStatus("Applying update and restarting…", 100);
+            Close();
+        }, "The launcher could not be updated");
     }
 
     private void OpenFolder_Click(object sender, RoutedEventArgs e)
@@ -107,6 +171,26 @@ public partial class MainWindow : Window
         if (settings is null) return;
         settings.MemoryGb = value;
         settings.Save(AppPaths.Settings);
+    }
+
+    private void CompatibilityToggle_Click(object sender, RoutedEventArgs e)
+    {
+        if (settings is null) return;
+        settings.WideServerSupport = CompatibilityToggle.IsChecked == true;
+        settings.Save(AppPaths.Settings);
+        RefreshCompatibilityText();
+        SetStatus(
+            settings.WideServerSupport
+                ? "Wide server support enabled. ViaFabricPlus will be installed at launch."
+                : "Native 26.2 networking selected.",
+            0);
+    }
+
+    private void RefreshCompatibilityText()
+    {
+        CompatibilityText.Text = CompatibilityToggle.IsChecked == true
+            ? "ViaFabricPlus • Auto-detects Classic through 26.2"
+            : "Native Minecraft 26.2 protocol";
     }
 
     private void RefreshAccount()
@@ -162,8 +246,17 @@ public partial class MainWindow : Window
         busy = value;
         LaunchButton.IsEnabled = !value;
         InstallButton.IsEnabled = !value;
+        ModsButton.IsEnabled = !value;
+        RepairButton.IsEnabled = !value;
         AccountButton.IsEnabled = !value;
         MemorySlider.IsEnabled = !value;
+        CompatibilityToggle.IsEnabled = !value;
+        UpdateButton.IsEnabled = !value;
+    }
+
+    private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (ShellClip is not null) ShellClip.Rect = new Rect(0, 0, e.NewSize.Width, e.NewSize.Height);
     }
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

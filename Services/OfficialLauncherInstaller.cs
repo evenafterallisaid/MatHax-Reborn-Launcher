@@ -11,14 +11,19 @@ public sealed class OfficialLauncherInstaller
     private const string ProfileKey = "mathax-reborn";
     private readonly FabricInstaller fabricInstaller = new(new HttpClient());
 
-    public async Task<string> InstallAsync(string clientJar, CancellationToken cancellationToken = default)
+    public async Task<string> InstallAsync(
+        string clientJar,
+        string? protocolCompatibilityJar,
+        CancellationToken cancellationToken = default)
     {
         string minecraftRoot = MinecraftPath.GetOSDefaultPath();
         MinecraftPath minecraftPath = new(minecraftRoot);
         string gameDirectory = Path.Combine(minecraftRoot, "mathax-reborn");
 
         Directory.CreateDirectory(gameDirectory);
-        MinecraftService.DeployClientJar(clientJar, Path.Combine(gameDirectory, "mods"));
+        string modsDirectory = Path.Combine(gameDirectory, "mods");
+        MinecraftService.DeployClientJar(clientJar, modsDirectory);
+        MinecraftService.DeployProtocolCompatibility(protocolCompatibilityJar, modsDirectory);
         await fabricInstaller.Install(
             MinecraftService.GameVersion,
             MinecraftService.FabricLoaderVersion,

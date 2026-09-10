@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <AssemblyName>MatHax Reborn Launcher</AssemblyName>
     <RootNamespace>MatHax.Reborn.Launcher</RootNamespace>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <ApplicationIcon>Assets\mathax.ico</ApplicationIcon>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>

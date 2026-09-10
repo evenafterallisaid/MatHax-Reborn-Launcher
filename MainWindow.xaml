@@ -5,12 +5,17 @@
         Title="MatHax Reborn Launcher"
         Width="980" Height="620" MinWidth="820" MinHeight="540"
         WindowStartupLocation="CenterScreen" WindowStyle="None"
-        ResizeMode="CanResize" Background="Transparent" AllowsTransparency="True">
+        ResizeMode="CanResize" Background="Transparent" AllowsTransparency="True"
+        UseLayoutRounding="True" SnapsToDevicePixels="True" SizeChanged="Window_SizeChanged">
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="46" ResizeBorderThickness="7" CornerRadius="16" GlassFrameThickness="0" />
     </shell:WindowChrome.WindowChrome>
 
-    <Border Background="{StaticResource BackgroundBrush}" CornerRadius="16" BorderBrush="#2A2032" BorderThickness="1">
+    <Border x:Name="ShellBorder" Background="{StaticResource BackgroundBrush}" CornerRadius="16"
+            BorderBrush="#2A2032" BorderThickness="1">
+        <Border.Clip>
+            <RectangleGeometry x:Name="ShellClip" RadiusX="16" RadiusY="16" />
+        </Border.Clip>
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="46" />
@@ -20,6 +25,8 @@
             <Grid Grid.Row="0" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <TextBlock Text="MATHAX REBORN" Margin="18,0,0,0" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource MutedBrush}" />
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                    <Button x:Name="UpdateButton" Visibility="Collapsed" Content="Update available" Margin="0,8,6,8"
+                            Padding="14,0" FontSize="11" Style="{StaticResource SecondaryButton}" Click="UpdateButton_Click" />
                     <Button Width="46" Height="46" Content="—" FontSize="15" Foreground="{StaticResource MutedBrush}" Background="Transparent" BorderThickness="0" Cursor="Hand" Click="Minimize_Click" />
                     <Button Width="46" Height="46" Content="×" FontSize="20" Foreground="{StaticResource MutedBrush}" Background="Transparent" BorderThickness="0" Cursor="Hand" Click="Close_Click" />
                 </StackPanel>
@@ -46,6 +53,7 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -68,29 +76,52 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel>
                                 <TextBlock Text="Memory" FontSize="12" Foreground="{StaticResource MutedBrush}" />
-                                <Slider x:Name="MemorySlider" Minimum="2" Maximum="16" TickFrequency="1" IsSnapToTickEnabled="True" Value="4" Width="260" Margin="0,10,0,0" ValueChanged="MemorySlider_ValueChanged" />
+                                <Slider x:Name="MemorySlider" Minimum="2" Maximum="16" TickFrequency="1"
+                                        IsSnapToTickEnabled="True" Value="4" Width="260" Margin="0,9,0,0"
+                                        Style="{StaticResource MatHaxSlider}" ValueChanged="MemorySlider_ValueChanged" />
                             </StackPanel>
                             <Border Grid.Column="1" Background="{StaticResource SurfaceHoverBrush}" CornerRadius="8" Padding="13,8" VerticalAlignment="Bottom">
                                 <TextBlock x:Name="MemoryText" Text="4 GB" FontWeight="SemiBold" Foreground="{StaticResource MintBrush}" />
                             </Border>
                         </Grid>
 
-                        <StackPanel Grid.Row="3" VerticalAlignment="Center">
+                        <Grid Grid.Row="3" Margin="0,20,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Wide server support" FontSize="12" Foreground="{StaticResource MutedBrush}" />
+                                <TextBlock x:Name="CompatibilityText" Text="ViaFabricPlus • Auto-detects Classic through 26.2"
+                                           FontSize="12" Margin="0,5,0,0" Foreground="{StaticResource TextBrush}" />
+                            </StackPanel>
+                            <ToggleButton x:Name="CompatibilityToggle" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                          Style="{StaticResource CompatibilitySwitch}" Click="CompatibilityToggle_Click"
+                                          ToolTip="Install ViaFabricPlus for broad multiplayer server compatibility" />
+                        </Grid>
+
+                        <StackPanel Grid.Row="4" VerticalAlignment="Center">
                             <TextBlock x:Name="StatusText" Text="Preparing launcher…" FontSize="14" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" />
                             <ProgressBar x:Name="Progress" Height="4" Minimum="0" Maximum="100" Margin="0,15,0,0" Foreground="{StaticResource AccentBrush}" Background="#2A2032" BorderThickness="0" />
                         </StackPanel>
 
-                        <Grid Grid.Row="4" Margin="0,0,0,12">
+                        <Grid Grid.Row="5" Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <Button x:Name="InstallButton" Content="Install to official launcher" Style="{StaticResource SecondaryButton}" Click="InstallButton_Click" />
-                            <Button Grid.Column="2" Content="Open game folder" Style="{StaticResource SecondaryButton}" Click="OpenFolder_Click" />
+                            <Button x:Name="InstallButton" Content="Install profile" Padding="10,12" FontSize="12"
+                                    Style="{StaticResource SecondaryButton}" Click="InstallButton_Click" />
+                            <Button x:Name="ModsButton" Grid.Column="2" Content="Mods" Padding="10,12" FontSize="12"
+                                    Style="{StaticResource SecondaryButton}" Click="ModsButton_Click" />
+                            <Button x:Name="RepairButton" Grid.Column="4" Content="Repair" Padding="10,12" FontSize="12"
+                                    Style="{StaticResource SecondaryButton}" Click="RepairButton_Click" />
+                            <Button Grid.Column="6" Content="Game folder" Padding="10,12" FontSize="12"
+                                    Style="{StaticResource SecondaryButton}" Click="OpenFolder_Click" />
                         </Grid>
 
-                        <Button x:Name="LaunchButton" Grid.Row="5" Content="Launch MatHax" Height="52" Style="{StaticResource PrimaryButton}" Click="LaunchButton_Click" />
+                        <Button x:Name="LaunchButton" Grid.Row="6" Content="Launch MatHax" Height="52" Style="{StaticResource PrimaryButton}" Click="LaunchButton_Click" />
                     </Grid>
                 </Border>
             </Grid>

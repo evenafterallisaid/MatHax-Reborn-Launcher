@@ -5,6 +5,7 @@ namespace MatHax.Reborn.Launcher.Models;
 public sealed class LauncherSettings
 {
     public int MemoryGb { get; set; } = 4;
+    public bool WideServerSupport { get; set; }
 
     public static LauncherSettings Load(string path)
     {
